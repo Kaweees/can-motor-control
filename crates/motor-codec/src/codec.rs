@@ -106,6 +106,18 @@ pub trait MotorCodec: Send + Sync {
     /// `Err(CodecError::DecodeFailed { .. })` for frames that look like the
     /// codec's vendor but fail to parse.
     fn decode(&self, frame: &CanFrame) -> Result<Option<Event>, CodecError>;
+
+    /// Decode feedback using the configured motor's identity and limits.
+    /// The runtime routes by CAN ID before calling this method. Codecs whose
+    /// feedback is independent of motor type can keep the default implementation.
+    fn decode_for_motor(
+        &self,
+        frame: &CanFrame,
+        motor: MotorRef<'_>,
+    ) -> Result<Option<Event>, CodecError> {
+        let _ = motor;
+        self.decode(frame)
+    }
 }
 
 /// Errors returned by [`MotorCodec`] implementations.

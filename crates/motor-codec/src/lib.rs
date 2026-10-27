@@ -31,6 +31,6 @@ mod motor;
 pub use caps::BusCapabilities;
 pub use codec::{CodecError, MotorCodec};
 pub use command::{Command, CommandKind};
-pub use event::{Event, ParamValue};
+pub use event::{Event, Feedback, ParamValue};
 pub use frame::{CanFrame, FrameError, FrameFlags};
 pub use motor::{Limits, MotorRef, MotorTypeId};

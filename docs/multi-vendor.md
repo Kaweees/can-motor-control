@@ -19,6 +19,13 @@ groups, robot, control loops, Python bindings — stays vendor-agnostic.
 - `bind_to_bus(&mut self, caps: BusCapabilities)`
 - `encode_enable / encode_disable / encode_set_zero / encode_command`
 - `decode(&self, frame: &CanFrame) -> Result<Option<Event>, CodecError>`
+- `decode_for_motor(&self, frame: &CanFrame, motor: MotorRef) -> Result<Option<Event>, CodecError>`
+
+The runtime routes each frame by receive ID, then supplies the configured motor
+to `decode_for_motor`. Its default implementation calls `decode`, preserving
+existing codecs. Damiao uses the motor model to select feedback scales and
+returns `Event::Feedback`, which carries telemetry, enable state, and faults
+together. Direct Damiao callers must supply motor context.
 
 It is object-safe (no associated types, no generics on methods), so the
 rest of the library uses `Box<dyn MotorCodec>` exclusively. The

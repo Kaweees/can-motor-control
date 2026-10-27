@@ -90,7 +90,7 @@ impl Motor {
         self.t_rotor
     }
 
-    /// True after a successful enable ACK; false after disable.
+    /// Last requested enable state, corrected by feedback when the codec reports it.
     pub fn is_enabled(&self) -> bool {
         self.is_enabled
     }
@@ -106,6 +106,16 @@ impl Motor {
 
     pub(crate) fn apply_event(&mut self, ev: &Event) {
         match *ev {
+            Event::Feedback { feedback, .. } => {
+                self.position = feedback.q;
+                self.velocity = feedback.dq;
+                self.torque = feedback.tau;
+                self.t_mos = feedback.t_mos;
+                self.t_rotor = feedback.t_rotor;
+                self.is_enabled = feedback.enabled;
+                self.fault = feedback.fault.map(FaultCode);
+                self.state_sequence = self.state_sequence.wrapping_add(1);
+            }
             Event::State {
                 q,
                 dq,

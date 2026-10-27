@@ -1,9 +1,35 @@
 //! Decoded inbound-frame events.
 
+/// Mechanical feedback and lifecycle status carried by the same CAN frame.
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub struct Feedback {
+    /// Position in radians.
+    pub q: f64,
+    /// Velocity in radians per second.
+    pub dq: f64,
+    /// Torque in newton metres.
+    pub tau: f64,
+    /// MOSFET temperature in degrees C.
+    pub t_mos: i16,
+    /// Rotor temperature in degrees C.
+    pub t_rotor: i16,
+    /// Whether the motor reports that it is enabled.
+    pub enabled: bool,
+    /// Vendor fault code, if present.
+    pub fault: Option<u16>,
+}
+
 /// A decoded inbound message from a motor.
 #[derive(Copy, Clone, Debug, PartialEq)]
 #[non_exhaustive]
 pub enum Event {
+    /// State and status decoded together, without dropping telemetry on a fault.
+    Feedback {
+        /// Receive CAN ID of the responding motor.
+        motor_id: u32,
+        /// Telemetry and status from this frame.
+        feedback: Feedback,
+    },
     /// Motor state response (the per-tick mechanical state).
     State {
         /// recv CAN ID of the responding motor.

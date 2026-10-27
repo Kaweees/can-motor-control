@@ -477,9 +477,23 @@ impl Robot {
                         }
                     }
                 }
-                let decoded = bus.codec.decode(frame).map_err(Error::Codec)?;
+                let Some(route) = bus.routes.get(&frame.id) else {
+                    continue;
+                };
+                let motor = &self.groups[&route.group_name].inner().motors()[route.motor_index];
+                let motor_ref = motor_codec::MotorRef {
+                    motor_type: motor.motor_type(),
+                    send_id: motor.send_id(),
+                    recv_id: motor.recv_id(),
+                    name: motor.name(),
+                };
+                let decoded = bus
+                    .codec
+                    .decode_for_motor(frame, motor_ref)
+                    .map_err(Error::Codec)?;
                 if let Some(event) = decoded {
                     let motor_id = match event {
+                        motor_codec::Event::Feedback { motor_id, .. } => motor_id,
                         motor_codec::Event::State { motor_id, .. } => motor_id,
                         motor_codec::Event::ParamReply { motor_id, .. } => motor_id,
                         motor_codec::Event::Fault { motor_id, .. } => motor_id,

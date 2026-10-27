@@ -35,6 +35,6 @@ pub use transport::{BusPoller, CanBus, MockCanBus, MockRecordedCall, TransportEr
 
 // Re-export can-motor-codec public types so users have a single import surface.
 pub use motor_codec::{
-    BusCapabilities, CanFrame, CodecError, Command, CommandKind, Event, FrameError, FrameFlags,
-    Limits, MotorCodec, MotorRef, MotorTypeId, ParamValue,
+    BusCapabilities, CanFrame, CodecError, Command, CommandKind, Event, Feedback, FrameError,
+    FrameFlags, Limits, MotorCodec, MotorRef, MotorTypeId, ParamValue,
 };
