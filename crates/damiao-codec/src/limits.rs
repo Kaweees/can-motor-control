@@ -4,7 +4,7 @@ use motor_codec::Limits;
 
 use crate::types::DamiaoMotorType;
 
-/// Damiao motor limits as published in the protocol manual.
+/// Damiao motor limits from Anvil's installed control library.
 ///
 /// Used to scale MIT-mode setpoints into bit-packed integers and to unscale
 /// state response integers back into f64.
@@ -27,7 +27,7 @@ pub(crate) const fn limits_for(t: DamiaoMotorType) -> Limits {
         },
         DamiaoMotorType::DM4340 => Limits {
             p_max: 12.5,
-            v_max: 10.0,
+            v_max: 8.0,
             t_max: 28.0,
         },
         DamiaoMotorType::DM4340_48V => Limits {
@@ -86,7 +86,7 @@ mod tests {
     fn dm4340_known_anchor() {
         let l = limits_for(DamiaoMotorType::DM4340);
         assert_eq!(l.p_max, 12.5);
-        assert_eq!(l.v_max, 10.0);
+        assert_eq!(l.v_max, 8.0);
         assert_eq!(l.t_max, 28.0);
     }
 

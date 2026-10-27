@@ -11,10 +11,9 @@ pub(crate) fn float_to_uint(x: f64, x_min: f64, x_max: f64, bits: u32) -> u16 {
     let span = x_max - x_min;
     let clamped = x.clamp(x_min, x_max);
     let levels = (1u32 << bits) - 1;
-    // Round-to-nearest. `(clamped - x_min)` is always >= 0 since we clamped,
-    // so adding 0.5 and casting to u32 (which truncates) implements
-    // round-half-up. `core::f64::round` is libm and unavailable in no_std.
-    let scaled = (clamped - x_min) * (levels as f64) / span + 0.5;
+    // Match Anvil's installed CanPacketEncoder::double_to_uint: divide first,
+    // then multiply and truncate. Rounding changes even a zero-torque command.
+    let scaled = (clamped - x_min) / span * (levels as f64);
     let q = scaled as u32;
     q.min(levels) as u16
 }

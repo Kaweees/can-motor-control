@@ -93,11 +93,13 @@ impl MotorCodec for DamiaoCodec {
         let lim = limits_for(t);
         match cmd {
             Command::Mit { kp, kd, q, dq, tau } => {
-                check_range("q", *q, lim.p_max)?;
-                check_range("dq", *dq, lim.v_max)?;
-                check_range("tau", *tau, lim.t_max)?;
-                check_unsigned("kp", *kp, 500.0)?;
-                check_unsigned("kd", *kd, 5.0)?;
+                // Anvil clamps finite setpoints to the wire range. Reject
+                // non-finite inputs, whose quantization has no useful meaning.
+                for (field, x) in [("q", q), ("dq", dq), ("tau", tau), ("kp", kp), ("kd", kd)] {
+                    if !x.is_finite() {
+                        return Err(CodecError::OutOfRange { field });
+                    }
+                }
                 let payload =
                     pack_mit_payload(*q, *dq, *kp, *kd, *tau, lim.p_max, lim.v_max, lim.t_max);
                 CanFrame::classical(motor.send_id, &payload).map_err(|_| CodecError::DecodeFailed {
@@ -254,22 +256,6 @@ impl MotorCodec for DamiaoCodec {
     }
 }
 
-fn check_range(field: &'static str, x: f64, magnitude: f64) -> Result<(), CodecError> {
-    if x.abs() > magnitude {
-        Err(CodecError::OutOfRange { field })
-    } else {
-        Ok(())
-    }
-}
-
-fn check_unsigned(field: &'static str, x: f64, max: f64) -> Result<(), CodecError> {
-    if !(0.0..=max).contains(&x) {
-        Err(CodecError::OutOfRange { field })
-    } else {
-        Ok(())
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -353,7 +339,7 @@ mod tests {
     }
 
     #[test]
-    fn mit_out_of_range_tau() {
+    fn mit_non_finite_tau_is_rejected() {
         let c = DamiaoCodec::new();
         let m = ref_motor("j0", DamiaoMotorType::DM4340, 0x01, 0x11);
         let r = c.encode_command(
@@ -363,7 +349,7 @@ mod tests {
                 kd: 0.0,
                 q: 0.0,
                 dq: 0.0,
-                tau: 1000.0,
+                tau: f64::NAN,
             },
         );
         assert!(matches!(r, Err(CodecError::OutOfRange { field: "tau" })));
