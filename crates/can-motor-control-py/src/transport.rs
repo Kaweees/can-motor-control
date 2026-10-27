@@ -12,6 +12,7 @@ use can_motor_control::{CanBus, MockCanBus};
 use pyo3::prelude::*;
 
 use crate::errors::transport_to_pyerr;
+use crate::frame::PyCanFrame;
 
 /// Internal trait-object holder shared between Python wrappers and the
 /// builder. Once the builder consumes a transport, the Arc has exactly one
@@ -45,6 +46,7 @@ impl TransportHandle {
 #[pyclass(name = "MockCanBus", module = "can_motor_control")]
 pub struct PyMockCanBus {
     pub(crate) handle: TransportHandle,
+    observer: MockCanBus,
 }
 
 #[pymethods]
@@ -52,8 +54,10 @@ impl PyMockCanBus {
     /// Create a classical-CAN mock bus identified by ``name`` (used in error messages).
     #[new]
     fn new(name: &str) -> Self {
+        let observer = MockCanBus::new(name);
         Self {
-            handle: TransportHandle::new(MockCanBus::new(name)),
+            handle: TransportHandle::new(observer.clone()),
+            observer,
         }
     }
 
@@ -62,9 +66,25 @@ impl PyMockCanBus {
     /// FD-capable interface.
     #[staticmethod]
     fn new_fd(name: &str) -> Self {
+        let observer = MockCanBus::new_fd(name);
         Self {
-            handle: TransportHandle::new(MockCanBus::new_fd(name)),
+            handle: TransportHandle::new(observer.clone()),
+            observer,
         }
+    }
+
+    /// Snapshot of transmitted frames, including after the builder consumes the bus.
+    fn sent_frames(&self) -> Vec<PyCanFrame> {
+        self.observer
+            .sent_frames()
+            .into_iter()
+            .map(|inner| PyCanFrame { inner })
+            .collect()
+    }
+
+    /// Queue feedback for the next Robot.tick call without accessing hardware.
+    fn inject_frame(&self, frame: &PyCanFrame) {
+        self.observer.inject_frame(frame.inner);
     }
 }
 
