@@ -60,6 +60,24 @@ pub struct PyMotor {
 }
 
 impl PyMotor {
+    fn motor_type_inner(&self, py: Python<'_>) -> PyResult<(&'static str, u16)> {
+        let robot = self.robot.bind(py).borrow();
+        let inner = robot
+            .inner
+            .lock()
+            .map_err(|_| pyo3::exceptions::PyRuntimeError::new_err("robot mutex poisoned"))?;
+        let motor = &inner
+            .group(&self.group_name)
+            .ok_or_else(|| PyKeyError::new_err(self.group_name.clone()))?
+            .inner()
+            .motors()[self.motor_index];
+        match motor.motor_type() {
+            motor_codec::MotorTypeId::Damiao(id) => Ok(("damiao", id)),
+            motor_codec::MotorTypeId::Robostride(id) => Ok(("robostride", id)),
+            _ => Err(PyValueError::new_err("unknown motor vendor")),
+        }
+    }
+
     fn snapshot(&self, py: Python<'_>) -> PyResult<MotorSnapshot> {
         let robot = self.robot.bind(py).borrow();
         let inner = robot
@@ -90,6 +108,12 @@ impl PyMotor {
 
 #[pymethods]
 impl PyMotor {
+    /// Vendor name and configured motor-type discriminant.
+    #[getter]
+    fn motor_type(&self, py: Python<'_>) -> PyResult<(&'static str, u16)> {
+        self.motor_type_inner(py)
+    }
+
     /// The motor's name, as declared in its `MotorSpec`.
     #[getter]
     fn name(&self, py: Python<'_>) -> PyResult<String> {
@@ -276,6 +300,18 @@ pub struct PyArm {
 
 #[pymethods]
 impl PyArm {
+    /// Return a motor by its zero-based command-array index.
+    fn motor_at(&self, py: Python<'_>, index: usize) -> PyResult<PyMotor> {
+        if index >= self.__len__(py)? {
+            return Err(pyo3::exceptions::PyIndexError::new_err(index));
+        }
+        Ok(PyMotor {
+            robot: self.robot.clone_ref(py),
+            group_name: self.name.clone(),
+            motor_index: index,
+        })
+    }
+
     /// The number of motors in the arm.
     fn __len__(&self, py: Python<'_>) -> PyResult<usize> {
         let r = self.robot.bind(py).borrow();
@@ -549,6 +585,13 @@ pub struct PyGripper {
 
 #[pymethods]
 impl PyGripper {
+    /// Whether enable() will discover endpoints for normalized opening control.
+    #[getter]
+    fn has_opening_control(&self, py: Python<'_>) -> PyResult<bool> {
+        let r = self.robot.bind(py).borrow();
+        with_gripper_ref(&r, &self.name, |g| Ok(g.has_opening_control()))
+    }
+
     /// The gripper's underlying `Motor`.
     #[getter]
     fn motor(&self, py: Python<'_>) -> PyResult<PyMotor> {
