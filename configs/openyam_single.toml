@@ -1,0 +1,29 @@
+# OpenYAM motor map from anvil-loader/yam_description/urdf/yam.ros2_control.xacro.
+# Use OpenYamJointInterface(robot, "follower_l") for metre-based gripper commands.
+# Call joints.set_mode() after robot.connect() and before robot.enable().
+[bus.follower_l]
+kind = "socketcan"
+interface = "follower_l"
+fd = false
+vendor = "damiao"
+
+[[group]]
+name = "follower_l"
+kind = "arm"
+bus = "follower_l"
+motors = [
+  { name = "follower_l_joint1", type = "DM4340", send_id = 0x01, recv_id = 0x11 },
+  { name = "follower_l_joint2", type = "DM4340", send_id = 0x02, recv_id = 0x12 },
+  { name = "follower_l_joint3", type = "DM4340", send_id = 0x03, recv_id = 0x13 },
+  { name = "follower_l_joint4", type = "DM4310", send_id = 0x04, recv_id = 0x14 },
+  { name = "follower_l_joint5", type = "DM4310", send_id = 0x05, recv_id = 0x15 },
+  { name = "follower_l_joint6", type = "DM4310", send_id = 0x06, recv_id = 0x16 },
+]
+
+[[group]]
+name = "follower_l_gripper"
+kind = "gripper"
+bus = "follower_l"
+motor = { name = "follower_l_finger_joint1", type = "DM4310", send_id = 0x08, recv_id = 0x18 }
+# No opening_direction: OpenYAM uses the fixed Anvil MIT mapping, without
+# the generic gripper API's endpoint discovery or PosForce control.

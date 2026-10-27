@@ -2,6 +2,10 @@
 
 Rust control library for Damiao-family CAN motors, with first-class Python bindings.
 
+For OpenYAM joint commands compatible with Anvil's motor interface, see
+[`docs/openyam.md`](./docs/openyam.md) and
+[`examples/07_openyam_joint_space.py`](./examples/07_openyam_joint_space.py).
+
 ## Status
 
 v0.1.0 (in development) — single-arm control over Linux SocketCAN or native macOS gs_usb. Linux supports CAN-FD; macOS gs_usb supports classical CAN. See [`docs/can-fd.md`](./docs/can-fd.md) and [`docs/gs-usb-macos.md`](./docs/gs-usb-macos.md).

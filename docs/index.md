@@ -9,6 +9,7 @@ without GIL contention.
 
 ## Where to go
 
+- **[OpenYAM joint control](openyam.md)** — Anvil-compatible motor mapping, joint units, and usage.
 - **[SocketCAN setup](socketcan-setup.md)** — bring up a Linux CAN interface
   for the first time.
 - **[CAN-FD](can-fd.md)** — notes on classical CAN vs CAN-FD.
